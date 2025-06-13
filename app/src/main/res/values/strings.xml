@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">AI Fitness App</string>
+    
+    <!-- Auth Screens -->
+    <string name="sign_in">Giriş Yap</string>
+    <string name="sign_up">Kayıt Ol</string>
+    <string name="email">E-posta</string>
+    <string name="password">Şifre</string>
+    <string name="forgot_password">Şifremi Unuttum</string>
+    <string name="dont_have_account">Hesabınız yok mu?</string>
+    <string name="already_have_account">Zaten hesabınız var mı?</string>
+    
+    <!-- Assessment Screens -->
+    <string name="continue_button">Devam Et</string>
+    <string name="back">Geri</string>
+    <string name="exit_assessment_title">Değerlendirmeden Çıkış</string>
+    <string name="exit_assessment_message">Değerlendirmeden çıkmak istediğinizden emin misiniz? Tüm ilerlemeniz kaybolacak.</string>
+    <string name="yes">Evet</string>
+    <string name="no">Hayır</string>
+    
+    <!-- Fitness Goal Screen -->
+    <string name="fitness_goal_question">Fitness hedefiniz nedir?</string>
+    <string name="goal_lose_weight">Kilo vermek istiyorum</string>
+    <string name="goal_try_ai_coach">AI Koçu denemek istiyorum</string>
+    <string name="goal_get_bulk">Kas kütlesi kazanmak istiyorum</string>
+    <string name="goal_gain_endurance">Dayanıklılık kazanmak istiyorum</string>
+    <string name="goal_trying_app">Sadece uygulamayı deniyorum! 🔥</string>
+    
+    <!-- Gender Screen -->
+    <string name="gender_question">Cinsiyetiniz nedir?</string>
+    <string name="gender_male">Erkek</string>
+    <string name="gender_female">Kadın</string>
+    <string name="gender_prefer_not_to_say">Belirtmek İstemiyorum</string>
+    
+    <!-- Weight Screen -->
+    <string name="weight_question">Kilonuz nedir?</string>
+    <string name="weight_hint">Kilonuzu kg cinsinden girin</string>
+    <string name="weight_error">Lütfen 30-300 kg arasında bir değer girin</string>
+    
+    <!-- Age Screen -->
+    <string name="age_question">Yaşınız nedir?</string>
+    <string name="age_hint">Yaşınızı girin</string>
+    <string name="age_error">Lütfen geçerli bir yaş girin (18-100)</string>
+    
+    <!-- Fitness Experience Screen -->
+    <string name="experience_question">Daha önce fitness deneyiminiz var mı?</string>
+    <string name="experience_yes">Evet, daha önce spor yaptım</string>
+    <string name="experience_no">Hayır, fitness\'a yeni başlıyorum</string>
+    
+    <!-- Fitness Level Screen -->
+    <string name="level_question">Mevcut fitness seviyeniz nedir?</string>
+    <string name="level_beginner">Başlangıç</string>
+    <string name="level_novice">Acemi</string>
+    <string name="level_intermediate">Orta Seviye</string>
+    <string name="level_advanced">İleri Seviye</string>
+    <string name="level_expert">Uzman</string>
+    <string name="level_beginner_desc">Fitness yolculuğuma yeni başlıyorum</string>
+    <string name="level_novice_desc">Temel bilgilere sahibim</string>
+    <string name="level_intermediate_desc">Düzenli antrenman yapıyorum</string>
+    <string name="level_advanced_desc">Yıllardır düzenli antrenman yapıyorum</string>
+    <string name="level_expert_desc">Profesyonel seviyede fitness</string>
+    
+    <!-- Physical Limitations Screen -->
+    <string name="limitations_question">Herhangi bir fiziksel kısıtlamanız var mı?</string>
+    <string name="limitation_arthritis">Eklem İltihabı</string>
+    <string name="limitation_back_pain">Sırt Ağrısı</string>
+    <string name="limitation_knee_pain">Diz Ağrısı</string>
+    <string name="limitation_obesity">Obezite</string>
+    <string name="limitation_none">Hiçbiri</string>
+    
+    <!-- Diet Preference Screen -->
+    <string name="diet_question">Beslenme tercihiniz nedir?</string>
+    <string name="diet_plant_based">Bitkisel Bazlı</string>
+    <string name="diet_carbs_one">Düşük Karbonhidrat</string>
+    <string name="diet_specialized">Özel Diyet (Keto, Paleo vb.)</string>
+    <string name="diet_traditional">Geleneksel Beslenme</string>
+    
+    <!-- Weekly Workout Days Screen -->
+    <string name="workout_days_question">Haftada kaç gün antrenman yapmak istiyorsunuz?</string>
+    <string name="days_per_week">%d gün/hafta</string>
+    
+    <!-- Exercise Preferences Screen -->
+    <string name="exercise_preferences_question">Hangi egzersiz türlerini tercih ediyorsunuz?</string>
+    <string name="exercise_jogging">Koşu</string>
+    <string name="exercise_walking">Yürüyüş</string>
+    <string name="exercise_hiking">Doğa Yürüyüşü</string>
+    <string name="exercise_skating">Paten</string>
+    <string name="exercise_biking">Bisiklet</string>
+    <string name="exercise_weightlift">Ağırlık Çalışması</string>
+    <string name="exercise_cardio">Kardiyo</string>
+    <string name="exercise_yoga">Yoga</string>
+    <string name="exercise_other">Diğer</string>
+    
+    <!-- Assessment Complete -->
+    <string name="assessment_complete">Değerlendirme tamamlandı! Profiliniz kaydediliyor...</string>
+</resources>
