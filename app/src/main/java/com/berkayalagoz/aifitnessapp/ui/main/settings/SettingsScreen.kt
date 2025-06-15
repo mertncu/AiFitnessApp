@@ -26,10 +26,20 @@ fun SettingsScreen(
     onSignOutClick: () -> Unit
 ) {
     var showPersonalInfo by remember { mutableStateOf(false) }
+    var showEmailChange by remember { mutableStateOf(false) }
+    var showSecurity by remember { mutableStateOf(false) }
     
     if (showPersonalInfo) {
         PersonalInformationScreen(
             onBackClick = { showPersonalInfo = false }
+        )
+    } else if (showEmailChange) {
+        EmailChangeScreen(
+            onBackClick = { showEmailChange = false }
+        )
+    } else if (showSecurity) {
+        SecurityScreen(
+            onBackClick = { showSecurity = false }
         )
     } else {
         LazyColumn(
@@ -57,9 +67,18 @@ fun SettingsScreen(
                     )
                     SettingsItemRow(
                         SettingsItem.NavigationItem(
+                            icon = Icons.Default.Email,
+                            title = "E-posta Değiştir",
+                            subtitle = "E-posta adresinizi güncelleyin",
+                            onClick = { showEmailChange = true }
+                        )
+                    )
+                    SettingsItemRow(
+                        SettingsItem.NavigationItem(
                             icon = Icons.Default.Security,
                             title = "Güvenlik",
-                            subtitle = "Şifre ve güvenlik ayarları"
+                            subtitle = "Şifre ve güvenlik ayarları",
+                            onClick = { showSecurity = true }
                         )
                     )
                     SettingsItemRow(

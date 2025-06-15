@@ -7,6 +7,7 @@ data class UserProfile(
     val location: String = "",
     val membershipType: String = "Basic Member",
     val profileImageUrl: String = "",
+    val coverImageId: String = "fitness_dark",
     val fitnessGoal: String = "",
     val gender: String = "",
     val weight: Float = 0f,

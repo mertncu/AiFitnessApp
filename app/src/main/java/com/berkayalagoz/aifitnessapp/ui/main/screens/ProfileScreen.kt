@@ -13,13 +13,22 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.berkayalagoz.aifitnessapp.model.UserProfile
 import com.berkayalagoz.aifitnessapp.ui.main.settings.SettingsScreen
+import com.berkayalagoz.aifitnessapp.ui.main.settings.Base64Image
+import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 @Composable
 fun ProfileScreen(
@@ -27,11 +36,29 @@ fun ProfileScreen(
     onSignOutClick: () -> Unit
 ) {
     var showSettings by remember { mutableStateOf(false) }
+    var showCoverImageSelector by remember { mutableStateOf(false) }
+    var currentUserProfile by remember { mutableStateOf(userProfile) }
+    
+    // Update currentUserProfile when userProfile changes
+    LaunchedEffect(userProfile) {
+        currentUserProfile = userProfile
+    }
     
     if (showSettings) {
         SettingsScreen(
             onBackClick = { showSettings = false },
             onSignOutClick = onSignOutClick
+        )
+    } else if (showCoverImageSelector) {
+        CoverImageSelectorScreen(
+            onBackClick = { showCoverImageSelector = false },
+            onCoverImageSelected = { coverImageId ->
+                // Update local state immediately for UI responsiveness
+                currentUserProfile = currentUserProfile.copy(coverImageId = coverImageId)
+                // Save to Firebase
+                updateUserCoverImage(currentUserProfile.userId, coverImageId)
+                showCoverImageSelector = false
+            }
         )
     } else {
         LazyColumn(
@@ -41,29 +68,24 @@ fun ProfileScreen(
             // Cover Image Header
             item {
                 ProfileCoverSection(
-                    userProfile = userProfile,
-                    onSettingsClick = { showSettings = true }
+                    userProfile = currentUserProfile,
+                    onCoverImageClick = { showCoverImageSelector = true }
                 )
             }
             
             // Profile Info Section
             item {
-                ProfileInfoSection(userProfile)
+                ProfileInfoSection(currentUserProfile)
             }
             
-            // Sandow Score Section
+            // Settings Section
             item {
-                SandowScoreSection()
-            }
-            
-            // Statistics Section
-            item {
-                ProfileStatisticsSection(userProfile)
+                ProfileSettingsSection(onSettingsClick = { showSettings = true })
             }
             
             // Sign Out Section
             item {
-                Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(16.dp))
                 ProfileSignOutSection(onSignOutClick)
             }
         }
@@ -73,8 +95,11 @@ fun ProfileScreen(
 @Composable
 private fun ProfileCoverSection(
     userProfile: UserProfile,
-    onSettingsClick: () -> Unit
+    onCoverImageClick: () -> Unit
 ) {
+    // Get cover image template based on user's selection
+    val coverTemplate = getCoverImageTemplate(userProfile.coverImageId)
+    
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -87,60 +112,45 @@ private fun ProfileCoverSection(
                 .background(
                     Brush.verticalGradient(
                         colors = listOf(
-                            Color(0xFF2C2C2E),
-                            Color(0xFF1C1C1E)
+                            coverTemplate.primaryColor,
+                            coverTemplate.secondaryColor
                         )
                     )
                 )
         ) {
             // Decorative fitness icon pattern
             Icon(
-                Icons.Default.FitnessCenter,
+                coverTemplate.icon,
                 contentDescription = null,
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .padding(32.dp)
                     .size(120.dp)
-                    .alpha(0.3f),
+                    .alpha(coverTemplate.iconAlpha),
                 tint = Color.White
             )
-        }
-        
-        // Top action buttons
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            IconButton(
-                onClick = { },
-                modifier = Modifier
-                    .background(
-                        Color.Black.copy(alpha = 0.3f),
-                        CircleShape
-                    )
-            ) {
-                Icon(
-                    Icons.Default.Phone,
-                    contentDescription = "Phone",
-                    tint = Color.White
-                )
-            }
             
-            IconButton(
-                onClick = onSettingsClick,
+            // Cover image change button
+            Surface(
                 modifier = Modifier
-                    .background(
-                        Color.Black.copy(alpha = 0.3f),
-                        CircleShape
-                    )
+                    .align(Alignment.TopEnd)
+                    .padding(16.dp)
+                    .size(40.dp)
+                    .clickable { onCoverImageClick() },
+                shape = CircleShape,
+                color = Color.Black.copy(alpha = 0.6f)
             ) {
-                Icon(
-                    Icons.Default.Settings,
-                    contentDescription = "Settings",
-                    tint = Color.White
-                )
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        Icons.Default.Edit,
+                        contentDescription = "Change Cover Image",
+                        tint = Color.White,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
             }
         }
         
@@ -148,7 +158,8 @@ private fun ProfileCoverSection(
         Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .offset(y = 40.dp)
+                .offset(y = 25.dp) // Moved up from 40.dp to 25.dp
+                .zIndex(1f) // Ensure profile photo is above other content
         ) {
             Surface(
                 modifier = Modifier.size(80.dp),
@@ -156,19 +167,13 @@ private fun ProfileCoverSection(
                 color = Color.White,
                 shadowElevation = 8.dp
             ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.Gray.copy(alpha = 0.2f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        Icons.Default.Person,
-                        contentDescription = "Profile",
-                        modifier = Modifier.size(40.dp),
-                        tint = Color.Gray
-                    )
-                }
+                Base64Image(
+                    base64String = userProfile.profileImageUrl,
+                    contentDescription = "Profile Image",
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop,
+                    clipToCircle = true
+                )
             }
         }
     }
@@ -183,14 +188,14 @@ private fun ProfileInfoSection(userProfile: UserProfile) {
             .padding(horizontal = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(modifier = Modifier.height(60.dp)) // Space for overlapping profile photo
+        Spacer(modifier = Modifier.height(45.dp)) // Space for overlapping profile photo (reduced from 60.dp)
         
-        // Name with flag
+        // Email with flag
         Text(
-            text = if (userProfile.name.isNotEmpty()) {
-                "${userProfile.name} 🇹🇷"
+            text = if (userProfile.email.isNotEmpty()) {
+                "${userProfile.email} 🇹🇷"
             } else {
-                "Kullanıcı 🇹🇷"
+                "kullanici@email.com 🇹🇷"
             },
             fontSize = 22.sp,
             fontWeight = FontWeight.Bold,
@@ -238,138 +243,35 @@ private fun ProfileInfoSection(userProfile: UserProfile) {
 }
 
 @Composable
-private fun SandowScoreSection() {
+private fun ProfileSettingsSection(onSettingsClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 24.dp),
+            .padding(horizontal = 24.dp)
+            .clickable { onSettingsClick() },
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFFF6B35))
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5))
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(20.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column {
-                Text(
-                    text = "Sandow Score",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
-                Text(
-                    text = "8.2/10",
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
-                Text(
-                    text = "Mükemmel",
-                    fontSize = 12.sp,
-                    color = Color.White.copy(alpha = 0.8f)
-                )
-            }
-            
-            Surface(
-                shape = CircleShape,
-                color = Color.White.copy(alpha = 0.2f),
-                modifier = Modifier.size(60.dp)
-            ) {
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    Icon(
-                        Icons.Default.TrendingUp,
-                        contentDescription = "Trending",
-                        tint = Color.White,
-                        modifier = Modifier.size(30.dp)
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun ProfileStatisticsSection(userProfile: UserProfile) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 24.dp, vertical = 16.dp),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(20.dp)
-        ) {
-            Text(
-                text = "İstatistikler",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.Black
+            Icon(
+                Icons.Default.Settings,
+                contentDescription = "Settings",
+                tint = Color(0xFF666666),
+                modifier = Modifier.size(24.dp)
             )
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                StatisticItem(
-                    value = "${userProfile.height.toInt()}",
-                    unit = "cm",
-                    label = "Boy"
-                )
-                
-                StatisticItem(
-                    value = "${userProfile.weight.toInt()}",
-                    unit = "kg",
-                    label = "Kilo"
-                )
-                
-                StatisticItem(
-                    value = "${((userProfile.weight / ((userProfile.height / 100) * (userProfile.height / 100)))).toInt()}",
-                    unit = "",
-                    label = "BMI"
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun StatisticItem(value: String, unit: String, label: String) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Row(
-            verticalAlignment = Alignment.Bottom
-        ) {
+            Spacer(modifier = Modifier.width(16.dp))
             Text(
-                text = value,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.Black
+                text = "Ayarlar",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium,
+                color = Color(0xFF666666)
             )
-            if (unit.isNotEmpty()) {
-                Text(
-                    text = unit,
-                    fontSize = 14.sp,
-                    color = Color.Gray,
-                    modifier = Modifier.padding(bottom = 2.dp)
-                )
-            }
         }
-        Text(
-            text = label,
-            fontSize = 12.sp,
-            color = Color.Gray
-        )
     }
 }
 
@@ -403,5 +305,71 @@ private fun ProfileSignOutSection(onSignOutClick: () -> Unit) {
                 color = Color(0xFFD32F2F)
             )
         }
+    }
+}
+
+// Function to update user cover image in Firebase
+private fun updateUserCoverImage(userId: String, coverImageId: String) {
+    CoroutineScope(Dispatchers.IO).launch {
+        try {
+            val firestore = FirebaseFirestore.getInstance()
+            firestore.collection("users")
+                .document(userId)
+                .update(
+                    mapOf(
+                        "coverImageId" to coverImageId,
+                        "updatedAt" to System.currentTimeMillis()
+                    )
+                )
+                .addOnSuccessListener {
+                    println("Cover image updated successfully")
+                }
+                .addOnFailureListener { e ->
+                    println("Error updating cover image: ${e.message}")
+                }
+        } catch (e: Exception) {
+            println("Error updating cover image: ${e.message}")
+        }
+    }
+}
+
+// Helper function to get cover image template
+private fun getCoverImageTemplate(coverImageId: String): CoverImageTemplate {
+    return when (coverImageId) {
+        "orange_gradient" -> CoverImageTemplate(
+            id = "orange_gradient",
+            name = "Orange Power",
+            primaryColor = Color(0xFFFF6B35),
+            secondaryColor = Color(0xFFFF8A50),
+            icon = Icons.Default.LocalFireDepartment
+        )
+        "blue_ocean" -> CoverImageTemplate(
+            id = "blue_ocean",
+            name = "Ocean Blue",
+            primaryColor = Color(0xFF1976D2),
+            secondaryColor = Color(0xFF42A5F5),
+            icon = Icons.Default.Pool
+        )
+        "purple_energy" -> CoverImageTemplate(
+            id = "purple_energy",
+            name = "Purple Energy",
+            primaryColor = Color(0xFF7B1FA2),
+            secondaryColor = Color(0xFFAB47BC),
+            icon = Icons.Default.Bolt
+        )
+        "green_nature" -> CoverImageTemplate(
+            id = "green_nature",
+            name = "Nature Green",
+            primaryColor = Color(0xFF388E3C),
+            secondaryColor = Color(0xFF66BB6A),
+            icon = Icons.Default.Eco
+        )
+        else -> CoverImageTemplate( // Default: fitness_dark
+            id = "fitness_dark",
+            name = "Fitness Dark",
+            primaryColor = Color(0xFF2C2C2E),
+            secondaryColor = Color(0xFF1C1C1E),
+            icon = Icons.Default.FitnessCenter
+        )
     }
 } 

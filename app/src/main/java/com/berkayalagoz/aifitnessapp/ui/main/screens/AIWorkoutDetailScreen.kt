@@ -1,11 +1,20 @@
 package com.berkayalagoz.aifitnessapp.ui.main.screens
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import kotlin.math.cos
+import kotlin.math.sin
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
@@ -612,170 +621,156 @@ private fun AIActiveWorkoutScreen(
         }
     }
 
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxSize()
             .background(
                 Brush.verticalGradient(
                     colors = listOf(
                         Color(0xFF667eea),
-                        Color(0xFF764ba2),
-                        Color(0xFF9575cd)
+                        Color(0xFF764ba2)
                     )
                 )
             )
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+        // Header
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            color = Color.White.copy(alpha = 0.95f)
         ) {
-            // AI indicator with modern design
-            Card(
-                colors = CardDefaults.cardColors(
-                    containerColor = Color.White.copy(alpha = 0.2f)
-                ),
-                shape = RoundedCornerShape(20.dp)
+            Column(
+                modifier = Modifier.padding(16.dp)
             ) {
+                // AI Badge
                 Row(
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center
                 ) {
-                    Icon(
-                        Icons.Default.Psychology,
-                        contentDescription = "AI",
-                        tint = Color(0xFFFFD700),
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "🤖 GEMINI AI COACHING",
-                        color = Color.White,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Surface(
+                        color = Color(0xFFFFD700),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "🤖",
+                                fontSize = 14.sp
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "GEMINI AI COACHING",
+                                color = Color.White,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
                 }
-            }
-            
-            Spacer(modifier = Modifier.height(20.dp))
-
-            // Status bar with workout info
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = Color.White.copy(alpha = 0.15f)
-                ),
-                shape = RoundedCornerShape(16.dp)
-            ) {
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                // Progress
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
+                    modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column {
-                        Text(
-                            text = "AI Egzersiz ${currentExercise + 1}/${workout.exercises.size}",
-                            fontSize = 12.sp,
-                            color = Color.White.copy(alpha = 0.7f)
-                        )
-                        LinearProgressIndicator(
-                            progress = (currentExercise + 1).toFloat() / workout.exercises.size,
-                            modifier = Modifier
-                                .width(140.dp)
-                                .height(6.dp),
-                            color = Color(0xFFFFD700),
-                            trackColor = Color.White.copy(alpha = 0.2f)
-                        )
-                    }
-                    
-                    Column(horizontalAlignment = Alignment.End) {
-                        Text(
-                            text = "Set $currentSet/${workout.exercises[currentExercise].sets}",
-                            fontSize = 12.sp,
-                            color = Color.White.copy(alpha = 0.7f)
-                        )
-                        Text(
-                            text = "${workout.exercises[currentExercise].reps} tekrar",
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
-                    }
+                    Text(
+                        text = "AI Egzersiz ${currentExercise + 1}/${workout.exercises.size}",
+                        fontSize = 13.sp,
+                        color = Color(0xFF2E2E2E),
+                        fontWeight = FontWeight.Medium
+                    )
+                    Text(
+                        text = "Set ${currentSet}/${workout.exercises[currentExercise].sets}",
+                        fontSize = 13.sp,
+                        color = Color(0xFF666666)
+                    )
                 }
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                LinearProgressIndicator(
+                    progress = { (currentExercise + 1).toFloat() / workout.exercises.size },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(6.dp)
+                        .clip(RoundedCornerShape(3.dp)),
+                    color = Color(0xFF667eea),
+                    trackColor = Color(0xFFF0F0F0)
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Text(
+                    text = "${workout.exercises[currentExercise].reps} tekrar",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF2E2E2E)
+                )
             }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Exercise name with AI emphasis
+        }
+        
+        // Content
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .padding(20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            // Exercise name
             Text(
                 text = workout.exercises[currentExercise].name,
-                fontSize = 28.sp,
+                fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White,
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
             )
-
+            
             Spacer(modifier = Modifier.height(16.dp))
-
-            // AI Exercise demonstration with smart icons
-            Card(
-                modifier = Modifier
-                    .size(200.dp, 150.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = Color.White.copy(alpha = 0.2f)
-                ),
+            
+            // Exercise icon
+            Surface(
+                modifier = Modifier.size(120.dp),
+                color = Color.White.copy(alpha = 0.15f),
                 shape = RoundedCornerShape(20.dp)
             ) {
                 Box(
-                    modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                                                 // Smart AI exercise icon
-                         val exerciseIcon = when {
-                             workout.exercises[currentExercise].name.contains("Push", ignoreCase = true) -> "💪"
-                             workout.exercises[currentExercise].name.contains("Squat", ignoreCase = true) -> "🏋️"
-                             workout.exercises[currentExercise].name.contains("Pull", ignoreCase = true) -> "🤸"
-                             workout.exercises[currentExercise].name.contains("Lunge", ignoreCase = true) -> "🏃"
-                             workout.exercises[currentExercise].name.contains("Plank", ignoreCase = true) -> "🧘"
-                             workout.exercises[currentExercise].name.contains("Burpee", ignoreCase = true) -> "⚡"
-                             workout.exercises[currentExercise].name.contains("Jump", ignoreCase = true) -> "🤾"
-                             workout.exercises[currentExercise].name.contains("Futbol", ignoreCase = true) -> "⚽"
-                             workout.exercises[currentExercise].name.contains("Basketbol", ignoreCase = true) -> "🏀"
-                             workout.exercises[currentExercise].name.contains("Dövüş", ignoreCase = true) -> "🥋"
-                             workout.exercises[currentExercise].name.contains("Tenis", ignoreCase = true) -> "🎾"
-                             workout.exercises[currentExercise].name.contains("Voleybol", ignoreCase = true) -> "🏐"
-                             workout.exercises[currentExercise].name.contains("Badminton", ignoreCase = true) -> "🏸"
-                             workout.exercises[currentExercise].name.contains("Güreş", ignoreCase = true) -> "🤼"
-                             workout.exercises[currentExercise].name.contains("Fitness", ignoreCase = true) -> "💪"
-                             workout.exercises[currentExercise].name.contains("Cardio", ignoreCase = true) -> "❤️"
-                             workout.exercises[currentExercise].name.contains("Stretch", ignoreCase = true) -> "🤸‍♀️"
-                             else -> "🏋️‍♀️"
-                         }
+                        val exerciseIcon = when {
+                            workout.exercises[currentExercise].name.contains("Push", ignoreCase = true) -> "💪"
+                            workout.exercises[currentExercise].name.contains("Squat", ignoreCase = true) -> "🏋️"
+                            workout.exercises[currentExercise].name.contains("Pull", ignoreCase = true) -> "🤸"
+                            workout.exercises[currentExercise].name.contains("Lunge", ignoreCase = true) -> "🏃"
+                            workout.exercises[currentExercise].name.contains("Plank", ignoreCase = true) -> "🧘"
+                            workout.exercises[currentExercise].name.contains("Burpee", ignoreCase = true) -> "⚡"
+                            workout.exercises[currentExercise].name.contains("Jump", ignoreCase = true) -> "🤾"
+                            else -> "🏋️‍♀️"
+                        }
                         
                         Text(
                             text = exerciseIcon,
-                            fontSize = 56.sp
+                            fontSize = 40.sp
                         )
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(4.dp))
                         Row(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(
-                                Icons.Default.Psychology,
-                                contentDescription = null,
-                                tint = Color(0xFFFFD700),
-                                modifier = Modifier.size(16.dp)
+                            Text(
+                                text = "🤖",
+                                fontSize = 12.sp
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
                                 text = "AI Optimized",
-                                fontSize = 12.sp,
+                                fontSize = 10.sp,
                                 color = Color.White.copy(alpha = 0.8f),
                                 fontWeight = FontWeight.Medium
                             )
@@ -783,15 +778,13 @@ private fun AIActiveWorkoutScreen(
                     }
                 }
             }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // AI Exercise instruction with reasoning
-            Card(
+            
+            Spacer(modifier = Modifier.height(20.dp))
+            
+            // AI instruction
+            Surface(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFFFFD700).copy(alpha = 0.2f)
-                ),
+                color = Color.White.copy(alpha = 0.1f),
                 shape = RoundedCornerShape(16.dp)
             ) {
                 Column(
@@ -800,16 +793,14 @@ private fun AIActiveWorkoutScreen(
                     Row(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(
-                            Icons.Default.Psychology,
-                            contentDescription = null,
-                            tint = Color(0xFFFFD700),
-                            modifier = Modifier.size(20.dp)
+                        Text(
+                            text = "🤖",
+                            fontSize = 16.sp
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = "AI Rehberlik:",
-                            fontSize = 14.sp,
+                            fontSize = 13.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.White
                         )
@@ -817,15 +808,15 @@ private fun AIActiveWorkoutScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = workout.exercises[currentExercise].instruction,
-                        fontSize = 14.sp,
+                        fontSize = 13.sp,
                         color = Color.White.copy(alpha = 0.9f),
-                        lineHeight = 20.sp
+                        lineHeight = 18.sp
                     )
                     
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = "💡 Gemini AI Önerisi: Bu egzersiz hedeflerinize göre optimize edilmiştir",
-                        fontSize = 12.sp,
+                        fontSize = 11.sp,
                         color = Color(0xFFFFD700).copy(alpha = 0.9f),
                         fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
                     )
@@ -833,174 +824,198 @@ private fun AIActiveWorkoutScreen(
             }
 
             Spacer(modifier = Modifier.height(32.dp))
-
-            // Smart AI Timer with glow effect
-            Card(
-                modifier = Modifier.size(160.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = if (timeRemaining <= 5) Color(0xFFFF4757) else Color.White
-                ),
-                shape = CircleShape,
-                elevation = CardDefaults.cardElevation(defaultElevation = 12.dp)
+            
+            // Clock-style Timer
+            Box(
+                modifier = Modifier.size(180.dp),
+                contentAlignment = Alignment.Center
             ) {
-                Box(
-                    contentAlignment = Alignment.Center,
+                // Outer circle (clock face)
+                Canvas(
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        if (isPaused) {
-                            Icon(
-                                Icons.Default.Pause,
-                                contentDescription = null,
-                                tint = Color(0xFF667eea),
-                                modifier = Modifier.size(24.dp)
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                        }
-                        Text(
-                            text = String.format("%02d:%02d", timeRemaining / 60, timeRemaining % 60),
-                            fontSize = 32.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = if (timeRemaining <= 5) Color.White else Color(0xFF667eea)
-                        )
-                        Text(
-                            text = if (isPaused) "DURAKLATILDI" else "AI TIMER",
-                            fontSize = 10.sp,
-                            color = if (timeRemaining <= 5) Color.White.copy(alpha = 0.8f) else Color(0xFF667eea).copy(alpha = 0.7f)
+                    val center = Offset(size.width / 2, size.height / 2)
+                    val radius = size.minDimension / 2 - 20.dp.toPx()
+                    
+                    // Clock face background
+                    drawCircle(
+                        color = Color.White,
+                        radius = radius,
+                        center = center
+                    )
+                    
+                    // Clock face border
+                    drawCircle(
+                        color = Color(0xFF667eea),
+                        radius = radius,
+                        center = center,
+                        style = Stroke(width = 4.dp.toPx())
+                    )
+                    
+                    // Progress arc
+                    val sweepAngle = (timeRemaining.toFloat() / 30f) * 360f
+                    drawArc(
+                        color = if (timeRemaining <= 5) Color(0xFFFF4757) else Color(0xFF667eea),
+                        startAngle = -90f,
+                        sweepAngle = sweepAngle,
+                        useCenter = false,
+                        style = Stroke(width = 8.dp.toPx(), cap = StrokeCap.Round),
+                        topLeft = Offset(center.x - radius, center.y - radius),
+                        size = Size(radius * 2, radius * 2)
+                    )
+                    
+                    // Clock marks (12, 3, 6, 9)
+                    for (i in 0..3) {
+                        val angle = i * 90.0
+                        val markRadius = radius - 15.dp.toPx()
+                        val x = center.x + markRadius * cos(Math.toRadians(angle - 90)).toFloat()
+                        val y = center.y + markRadius * sin(Math.toRadians(angle - 90)).toFloat()
+                        
+                        drawCircle(
+                            color = Color(0xFF667eea),
+                            radius = 3.dp.toPx(),
+                            center = Offset(x, y)
                         )
                     }
                 }
+                
+                // Timer text
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = String.format("%02d:%02d", timeRemaining / 60, timeRemaining % 60),
+                        fontSize = 32.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (timeRemaining <= 5) Color(0xFFFF4757) else Color(0xFF2E2E2E)
+                    )
+                    Text(
+                        text = if (isPaused) "Duraklatıldı" else "AI TIMER",
+                        fontSize = 11.sp,
+                        color = Color(0xFF667eea),
+                        fontWeight = FontWeight.Medium
+                    )
+                }
             }
 
-            Spacer(modifier = Modifier.weight(1f))
-
-            // Advanced AI control buttons
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+        }
+        
+        // Bottom controls
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            color = Color.White,
+            shadowElevation = 8.dp
+        ) {
+            Column(
+                modifier = Modifier.padding(20.dp)
             ) {
-                // Smart Pause/Resume button
-                Card(
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(56.dp)
-                        .clickable {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    // Pause/Resume button
+                    Button(
+                        onClick = {
                             isPaused = !isPaused
                             isTimerRunning = !isPaused
                             if (!isPaused) onPause() else {}
                         },
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color.White.copy(alpha = 0.2f)
-                    ),
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(52.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (isPaused) Color(0xFF4CAF50) else Color(0xFFF5F5F5)
+                        ),
+                        shape = RoundedCornerShape(12.dp),
+                        elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp)
                     ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                if (isPaused) Icons.Default.PlayArrow else Icons.Default.Pause,
-                                contentDescription = null,
-                                tint = Color.White,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = if (isPaused) "Devam" else "Duraklat",
-                                color = Color.White,
-                                fontWeight = FontWeight.Medium
-                            )
-                        }
+                        Icon(
+                            if (isPaused) Icons.Default.PlayArrow else Icons.Default.Pause,
+                            contentDescription = null,
+                            tint = if (isPaused) Color.White else Color(0xFF2E2E2E),
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = if (isPaused) "Devam" else "Duraklat",
+                            color = if (isPaused) Color.White else Color(0xFF2E2E2E),
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 14.sp
+                        )
                     }
-                }
-                
-                // Smart Next/Finish button
-                Card(
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(56.dp)
-                        .clickable {
+                    
+                    // Next/Finish button
+                    Button(
+                        onClick = {
                             if (currentSet < workout.exercises[currentExercise].sets) {
                                 currentSet++
                                 timeRemaining = workout.exercises[currentExercise].restTime
+                                isPaused = false
+                                isTimerRunning = true
                             } else if (currentExercise < workout.exercises.size - 1) {
                                 currentExercise++
                                 currentSet = 1
                                 timeRemaining = workout.exercises[currentExercise].restTime
+                                isPaused = false
+                                isTimerRunning = true
                             } else {
                                 onFinish()
                             }
                         },
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color(0xFFFFD700)
-                    ),
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                if (currentExercise == workout.exercises.size - 1 && currentSet == workout.exercises[currentExercise].sets) 
-                                    Icons.Default.Check else Icons.Default.SkipNext,
-                                contentDescription = null,
-                                tint = Color.Black,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = if (currentExercise == workout.exercises.size - 1 && currentSet == workout.exercises[currentExercise].sets) 
-                                    "Bitir" else "Sonraki",
-                                color = Color.Black,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // AI Emergency stop with confirmation
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(48.dp)
-                    .clickable { onFinish() },
-                colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFFFF4757).copy(alpha = 0.8f)
-                ),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(52.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF667eea)
+                        ),
+                        shape = RoundedCornerShape(12.dp),
+                        elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp)
                     ) {
                         Icon(
-                            Icons.Default.Stop,
+                            if (currentExercise == workout.exercises.size - 1 && currentSet == workout.exercises[currentExercise].sets) 
+                                Icons.Default.Check else Icons.Default.SkipNext,
                             contentDescription = null,
                             tint = Color.White,
-                            modifier = Modifier.size(18.dp)
+                            modifier = Modifier.size(20.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "AI Antrenmanını Sonlandır",
+                            text = if (currentExercise == workout.exercises.size - 1 && currentSet == workout.exercises[currentExercise].sets) 
+                                "Bitir" else "Sonraki",
                             color = Color.White,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Medium
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 14.sp
                         )
                     }
+                }
+                
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                // Stop workout button
+                OutlinedButton(
+                    onClick = onFinish,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(44.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = Color(0xFFFF4757)
+                    ),
+                    border = BorderStroke(1.dp, Color(0xFFFF4757)),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Icon(
+                        Icons.Default.Stop,
+                        contentDescription = null,
+                        tint = Color(0xFFFF4757),
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "AI Antrenmanını Sonlandır",
+                        color = Color(0xFFFF4757),
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 14.sp
+                    )
                 }
             }
         }

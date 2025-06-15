@@ -1,5 +1,8 @@
 package com.berkayalagoz.aifitnessapp.ui.main.settings
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -15,28 +18,60 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.tasks.await
 import com.berkayalagoz.aifitnessapp.model.UserProfile
+import coil.compose.AsyncImage
 
 @Composable
 fun PersonalInformationScreen(onBackClick: () -> Unit) {
     var isLoading by remember { mutableStateOf(true) }
     var userProfile by remember { mutableStateOf<UserProfile?>(null) }
     var isSaving by remember { mutableStateOf(false) }
+    var isUploadingImage by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
     
-    // Form state
-    var name by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
-    var location by remember { mutableStateOf("") }
+    // Form state - sadece boy, kilo ve profil resmi
     var height by remember { mutableStateOf("") }
     var weight by remember { mutableStateOf("") }
+    var profileImageUrl by remember { mutableStateOf("") }
+    
+    // Image picker launcher
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let {
+            scope.launch {
+                isUploadingImage = true
+                try {
+                    val downloadUrl = uploadImageToFirebase(it, context)
+                    profileImageUrl = downloadUrl
+                    // Immediately update the profile in Firebase
+                    userProfile?.let { profile ->
+                        val updatedProfile = profile.copy(
+                            profileImageUrl = downloadUrl,
+                            updatedAt = System.currentTimeMillis()
+                        )
+                        updateUserProfile(updatedProfile)
+                        userProfile = updatedProfile
+                    }
+                } catch (e: Exception) {
+                    // Handle error - you might want to show a toast or snackbar here
+                } finally {
+                    isUploadingImage = false
+                }
+            }
+        }
+    }
     
     // Load user profile on first composition
     LaunchedEffect(Unit) {
@@ -45,11 +80,9 @@ fun PersonalInformationScreen(onBackClick: () -> Unit) {
                 val profile = loadUserProfile()
                 profile?.let {
                     userProfile = it
-                    name = it.name
-                    email = it.email
-                    location = it.location
                     height = it.height.toString()
                     weight = it.weight.toString()
+                    profileImageUrl = it.profileImageUrl
                 }
             } catch (e: Exception) {
                 // Handle error
@@ -78,20 +111,18 @@ fun PersonalInformationScreen(onBackClick: () -> Unit) {
         } else {
             // Profile Photo Section
             item {
-                ProfilePhotoSection()
+                ProfilePhotoSection(
+                    profileImageUrl = profileImageUrl,
+                    isUploading = isUploadingImage,
+                    onPhotoClick = { imagePickerLauncher.launch("image/*") }
+                )
             }
             
-            // Personal Info Form
+            // Personal Info Form - sadece boy ve kilo
             item {
                 PersonalInfoForm(
-                    name = name,
-                    email = email,
-                    location = location,
                     height = height,
                     weight = weight,
-                    onNameChange = { name = it },
-                    onEmailChange = { email = it },
-                    onLocationChange = { location = it },
                     onHeightChange = { height = it },
                     onWeightChange = { weight = it }
                 )
@@ -105,36 +136,13 @@ fun PersonalInformationScreen(onBackClick: () -> Unit) {
                         scope.launch {
                             isSaving = true
                             try {
-                                                                val updatedProfile = UserProfile(
-                                    userId = userProfile?.userId ?: "",
-                                    name = name,
-                                    email = email,
-                                    location = location,
-                                    height = height.toFloatOrNull() ?: 0f,
-                                    weight = weight.toFloatOrNull() ?: 0f,
-                                    membershipType = userProfile?.membershipType ?: "Basic Member",
-                                    profileImageUrl = userProfile?.profileImageUrl ?: "",
-                                    fitnessGoal = userProfile?.fitnessGoal ?: "",
-                                    gender = userProfile?.gender ?: "",
-                                    age = userProfile?.age ?: 0,
-                                    hasPreviousFitnessExperience = userProfile?.hasPreviousFitnessExperience ?: false,
-                                    fitnessLevel = userProfile?.fitnessLevel ?: 0,
-                                    activityLevel = userProfile?.activityLevel ?: 0,
-                                    physicalLimitations = userProfile?.physicalLimitations ?: emptyList(),
-                                    medicalConditions = userProfile?.medicalConditions ?: "",
-                                    dietPreference = userProfile?.dietPreference ?: "",
-                                    dietaryPreferences = userProfile?.dietaryPreferences ?: "",
-                                    weeklyWorkoutDays = userProfile?.weeklyWorkoutDays ?: 0,
-                                    exercisePreferences = userProfile?.exercisePreferences ?: emptyList(),
-                                    supplements = userProfile?.supplements ?: emptyList(),
-                                    dailyCalorieGoal = userProfile?.dailyCalorieGoal ?: 0,
-                                    sleepQuality = userProfile?.sleepQuality ?: "",
-                                    sleepHours = userProfile?.sleepHours ?: 8,
-                                    waterIntake = userProfile?.waterIntake ?: 8,
-                                    createdAt = userProfile?.createdAt ?: System.currentTimeMillis(),
+                                val updatedProfile = userProfile?.copy(
+                                    height = height.toFloatOrNull() ?: userProfile?.height ?: 0f,
+                                    weight = weight.toFloatOrNull() ?: userProfile?.weight ?: 0f,
+                                    profileImageUrl = profileImageUrl,
                                     updatedAt = System.currentTimeMillis()
                                 )
-                                updateUserProfile(updatedProfile)
+                                updatedProfile?.let { updateUserProfile(it) }
                                 // Show success message
                             } catch (e: Exception) {
                                 // Handle error
@@ -189,7 +197,11 @@ private fun LoadingSection() {
 }
 
 @Composable
-private fun ProfilePhotoSection() {
+private fun ProfilePhotoSection(
+    profileImageUrl: String,
+    isUploading: Boolean,
+    onPhotoClick: () -> Unit
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
@@ -208,24 +220,20 @@ private fun ProfilePhotoSection() {
                     shape = CircleShape,
                     color = Color.Gray.copy(alpha = 0.2f)
                 ) {
-                    Box(
+                    Base64Image(
+                        base64String = profileImageUrl,
+                        contentDescription = "Profile Photo",
                         modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            Icons.Default.Person,
-                            contentDescription = "Profile",
-                            modifier = Modifier.size(40.dp),
-                            tint = Color.Gray
-                        )
-                    }
+                        contentScale = ContentScale.Crop,
+                        clipToCircle = true
+                    )
                 }
                 
                 Surface(
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
                         .size(28.dp)
-                        .clickable { },
+                        .clickable { if (!isUploading) onPhotoClick() },
                     shape = CircleShape,
                     color = Color(0xFFFF6B35)
                 ) {
@@ -233,19 +241,27 @@ private fun ProfilePhotoSection() {
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(
-                            Icons.Default.CameraAlt,
-                            contentDescription = "Camera",
-                            modifier = Modifier.size(16.dp),
-                            tint = Color.White
-                        )
+                        if (isUploading) {
+                            CircularProgressIndicator(
+                                color = Color.White,
+                                modifier = Modifier.size(12.dp),
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Icon(
+                                Icons.Default.CameraAlt,
+                                contentDescription = "Camera",
+                                modifier = Modifier.size(16.dp),
+                                tint = Color.White
+                            )
+                        }
                     }
                 }
             }
             
             Spacer(modifier = Modifier.height(12.dp))
             Text(
-                text = "Profil Fotoğrafını Değiştir",
+                text = if (isUploading) "Yükleniyor..." else "Profil Fotoğrafını Değiştir",
                 fontSize = 14.sp,
                 color = Color(0xFFFF6B35),
                 fontWeight = FontWeight.Medium
@@ -258,14 +274,8 @@ private fun ProfilePhotoSection() {
 
 @Composable
 private fun PersonalInfoForm(
-    name: String,
-    email: String,
-    location: String,
     height: String,
     weight: String,
-    onNameChange: (String) -> Unit,
-    onEmailChange: (String) -> Unit,
-    onLocationChange: (String) -> Unit,
     onHeightChange: (String) -> Unit,
     onWeightChange: (String) -> Unit
 ) {
@@ -281,37 +291,10 @@ private fun PersonalInfoForm(
                 .padding(20.dp)
         ) {
             Text(
-                text = "Kişisel Bilgiler",
+                text = "Fiziksel Bilgiler",
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.Black
-            )
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            PersonalInfoField(
-                label = "İsim",
-                value = name,
-                onValueChange = onNameChange,
-                icon = Icons.Default.Person
-            )
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            PersonalInfoField(
-                label = "E-posta",
-                value = email,
-                onValueChange = onEmailChange,
-                icon = Icons.Default.Email
-            )
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            PersonalInfoField(
-                label = "Konum",
-                value = location,
-                onValueChange = onLocationChange,
-                icon = Icons.Default.LocationOn
             )
             
             Spacer(modifier = Modifier.height(16.dp))
@@ -433,4 +416,24 @@ private suspend fun updateUserProfile(userProfile: UserProfile) {
         .document(userId)
         .set(userProfile)
         .await()
+}
+
+private suspend fun uploadImageToFirebase(uri: Uri, context: android.content.Context): String {
+    val userId = FirebaseAuth.getInstance().currentUser?.uid ?: throw Exception("User not authenticated")
+    
+    try {
+        // Base64 encoding ile resmi Firestore'da saklayacağız
+        val base64Image = ImageUtils.uriToBase64(context, uri, 512)
+            ?: throw Exception("Resim işlenemedi")
+        
+        // Simulated delay for upload experience
+        kotlinx.coroutines.delay(1500)
+        
+        // Base64 string'i "data:image/jpeg;base64," prefix'i ile döndürüyoruz
+        // Bu şekilde AsyncImage doğrudan base64'ü gösterebilir
+        return "data:image/jpeg;base64,$base64Image"
+        
+    } catch (e: Exception) {
+        throw Exception("Image upload failed: ${e.message}")
+    }
 } 

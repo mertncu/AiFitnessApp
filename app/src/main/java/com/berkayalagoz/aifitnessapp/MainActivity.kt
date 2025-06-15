@@ -211,12 +211,18 @@ class MainActivity : ComponentActivity() {
                                     }
                                     is AssessmentState.Success -> {
                                         LaunchedEffect(Unit) {
+                                            // Assessment tamamlandı, AuthViewModel'e bildir
+                                            authViewModel.markAssessmentCompleted()
+                                            
+                                            // Profil kaydedilmesi için kısa bir süre bekle
+                                            kotlinx.coroutines.delay(1500L)
+                                            
                                             navController.navigate("main") {
                                                 popUpTo("assessment") { inclusive = true }
                                             }
                                             Toast.makeText(
                                                 this@MainActivity,
-                                                "Profile saved successfully!",
+                                                "Profil başarıyla kaydedildi!",
                                                 Toast.LENGTH_SHORT
                                             ).show()
                                         }

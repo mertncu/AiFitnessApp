@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
@@ -368,6 +369,34 @@ private fun ExercisesSection(exercises: List<Exercise>) {
 }
 
 @Composable
+private fun ExerciseMetric(
+    label: String,
+    value: String,
+    icon: String
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = icon,
+            fontSize = 24.sp
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = value,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.White
+        )
+        Text(
+            text = label,
+            fontSize = 12.sp,
+            color = Color.White.copy(alpha = 0.7f)
+        )
+    }
+}
+
+@Composable
 private fun ExerciseItem(exercise: Exercise, index: Int) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -473,75 +502,89 @@ private fun ActiveWorkoutScreen(
         }
     }
 
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(
-                        Color(0xFF1A1A2E),
-                        Color(0xFF16213E),
-                        Color(0xFF0F3460)
-                    )
-                )
-            )
+            .background(Color(0xFF2E2E2E))
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+        // Header
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            color = Color.White
         ) {
-            // Status bar with workout info
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = Color.White.copy(alpha = 0.1f)
-                ),
-                shape = RoundedCornerShape(16.dp)
+            Column(
+                modifier = Modifier.padding(16.dp)
             ) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
+                    modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column {
-                        Text(
-                            text = "Egzersiz ${currentExercise + 1}/${workout.exercises.size}",
-                            fontSize = 12.sp,
-                            color = Color.White.copy(alpha = 0.7f)
-                        )
-                        LinearProgressIndicator(
-                            progress = (currentExercise + 1).toFloat() / workout.exercises.size,
-                            modifier = Modifier
-                                .width(120.dp)
-                                .height(6.dp),
-                            color = Color(0xFFFF6B35),
-                            trackColor = Color.White.copy(alpha = 0.2f)
-                        )
-                    }
+                    Text(
+                        text = workout.title,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF2E2E2E)
+                    )
                     
-                    Column(horizontalAlignment = Alignment.End) {
-                        Text(
-                            text = "Set $currentSet/${workout.exercises[currentExercise].sets}",
-                            fontSize = 12.sp,
-                            color = Color.White.copy(alpha = 0.7f)
-                        )
-                        Text(
-                            text = "${workout.exercises[currentExercise].reps} tekrar",
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
+                    IconButton(
+                        onClick = onPause,
+                        modifier = Modifier
+                            .size(40.dp)
+                            .background(
+                                Color(0xFFF5F5F5),
+                                CircleShape
+                            )
+                    ) {
+                        Icon(
+                            Icons.Default.Pause,
+                            contentDescription = "Duraklat",
+                            tint = Color(0xFF2E2E2E),
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                 }
+                
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                LinearProgressIndicator(
+                    progress = { (currentExercise + 1).toFloat() / workout.exercises.size },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(6.dp)
+                        .clip(RoundedCornerShape(3.dp)),
+                    color = Color(0xFF2E2E2E),
+                    trackColor = Color(0xFFF0F0F0)
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Text(
+                    text = "Egzersiz ${currentExercise + 1} / ${workout.exercises.size} • Set $currentSet/${workout.exercises[currentExercise].sets}",
+                    fontSize = 12.sp,
+                    color = Color(0xFF666666)
+                )
             }
+        }
+        
+        // Content
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
 
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Exercise name
+            Text(
+                text = "Egzersiz ${currentExercise + 1}/${workout.exercises.size}",
+                fontSize = 14.sp,
+                color = Color.White.copy(alpha = 0.7f),
+                fontWeight = FontWeight.Medium
+            )
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
             Text(
                 text = workout.exercises[currentExercise].name,
                 fontSize = 28.sp,
@@ -549,192 +592,114 @@ private fun ActiveWorkoutScreen(
                 color = Color.White,
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
             )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Exercise demonstration image
-            Card(
-                modifier = Modifier
-                    .size(200.dp, 150.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = Color.White.copy(alpha = 0.15f)
-                ),
-                shape = RoundedCornerShape(20.dp)
+            
+            Spacer(modifier = Modifier.height(24.dp))
+            
+            Text(
+                text = workout.exercises[currentExercise].instruction,
+                fontSize = 16.sp,
+                color = Color.White.copy(alpha = 0.9f),
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                lineHeight = 22.sp
+            )
+            
+            Spacer(modifier = Modifier.height(32.dp))
+            
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(32.dp)
             ) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        // Exercise icon based on type
-                        val exerciseIcon = when {
-                            workout.exercises[currentExercise].name.contains("Push", ignoreCase = true) -> "💪"
-                            workout.exercises[currentExercise].name.contains("Squat", ignoreCase = true) -> "🏋️"
-                            workout.exercises[currentExercise].name.contains("Pull", ignoreCase = true) -> "🤸"
-                            workout.exercises[currentExercise].name.contains("Lunge", ignoreCase = true) -> "🏃"
-                            workout.exercises[currentExercise].name.contains("Plank", ignoreCase = true) -> "🧘"
-                            workout.exercises[currentExercise].name.contains("Burpee", ignoreCase = true) -> "⚡"
-                            workout.exercises[currentExercise].name.contains("Jump", ignoreCase = true) -> "🤾"
-                            workout.exercises[currentExercise].name.contains("Futbol", ignoreCase = true) -> "⚽"
-                            workout.exercises[currentExercise].name.contains("Basketbol", ignoreCase = true) -> "🏀"
-                            workout.exercises[currentExercise].name.contains("Dövüş", ignoreCase = true) -> "🥋"
-                            workout.exercises[currentExercise].name.contains("Tenis", ignoreCase = true) -> "🎾"
-                            workout.exercises[currentExercise].name.contains("Voleybol", ignoreCase = true) -> "🏐"
-                            workout.exercises[currentExercise].name.contains("Badminton", ignoreCase = true) -> "🏸"
-                            workout.exercises[currentExercise].name.contains("Güreş", ignoreCase = true) -> "🤼"
-                            workout.exercises[currentExercise].name.contains("Fitness", ignoreCase = true) -> "💪"
-                            else -> "🏋️‍♀️"
-                        }
-                        
-                        Text(
-                            text = exerciseIcon,
-                            fontSize = 48.sp
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "Hareket Gösterimi",
-                            fontSize = 12.sp,
-                            color = Color.White.copy(alpha = 0.7f)
-                        )
-                    }
-                }
+                ExerciseMetric(
+                    label = "Set",
+                    value = "${currentSet}/${workout.exercises[currentExercise].sets}",
+                    icon = "🔄"
+                )
+                ExerciseMetric(
+                    label = "Tekrar",
+                    value = workout.exercises[currentExercise].reps.toString(),
+                    icon = "💪"
+                )
+                ExerciseMetric(
+                    label = "Dinlenme",
+                    value = "${workout.exercises[currentExercise].restTime}s",
+                    icon = "⏱️"
+                )
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(40.dp))
 
-            // Exercise instruction
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFFFF6B35).copy(alpha = 0.2f)
-                ),
-                shape = RoundedCornerShape(16.dp)
+            // Timer
+            Box(
+                modifier = Modifier
+                    .size(140.dp)
+                    .background(
+                        Color.White.copy(alpha = 0.1f),
+                        CircleShape
+                    ),
+                contentAlignment = Alignment.Center
             ) {
                 Column(
-                    modifier = Modifier.padding(16.dp)
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            Icons.Default.Info,
-                            contentDescription = null,
-                            tint = Color(0xFFFF6B35),
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "Nasıl Yapılır:",
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = workout.exercises[currentExercise].instruction,
-                        fontSize = 14.sp,
-                        color = Color.White.copy(alpha = 0.9f),
-                        lineHeight = 20.sp
+                        text = String.format("%02d:%02d", timeRemaining / 60, timeRemaining % 60),
+                        fontSize = 36.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                    Text(
+                        text = if (isPaused) "Duraklatıldı" else "Dinlenme",
+                        fontSize = 12.sp,
+                        color = Color.White.copy(alpha = 0.7f)
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // Timer with modern design
-            Card(
-                modifier = Modifier.size(160.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = if (timeRemaining <= 5) Color(0xFFFF4757) else Color(0xFFFF6B35)
-                ),
-                shape = CircleShape,
-                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+        }
+        
+        // Bottom controls
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            color = Color.White
+        ) {
+            Column(
+                modifier = Modifier.padding(20.dp)
             ) {
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier.fillMaxSize()
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        if (isPaused) {
-                            Icon(
-                                Icons.Default.Pause,
-                                contentDescription = null,
-                                tint = Color.White,
-                                modifier = Modifier.size(24.dp)
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                        }
-                        Text(
-                            text = String.format("%02d:%02d", timeRemaining / 60, timeRemaining % 60),
-                            fontSize = 32.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
-                        Text(
-                            text = if (isPaused) "DURAKLATILDI" else "KALAN SÜRE",
-                            fontSize = 10.sp,
-                            color = Color.White.copy(alpha = 0.8f)
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.weight(1f))
-
-            // Modern control buttons
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                // Pause/Resume button
-                Card(
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(56.dp)
-                        .clickable {
+                    // Pause/Resume button
+                    Button(
+                        onClick = {
                             isPaused = !isPaused
                             isTimerRunning = !isPaused
                             if (!isPaused) onPause() else {}
                         },
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color.White.copy(alpha = 0.15f)
-                    ),
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFFF5F5F5)
+                        ),
+                        shape = RoundedCornerShape(12.dp)
                     ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                if (isPaused) Icons.Default.PlayArrow else Icons.Default.Pause,
-                                contentDescription = null,
-                                tint = Color.White,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = if (isPaused) "Devam" else "Duraklat",
-                                color = Color.White,
-                                fontWeight = FontWeight.Medium
-                            )
-                        }
+                        Icon(
+                            if (isPaused) Icons.Default.PlayArrow else Icons.Default.Pause,
+                            contentDescription = null,
+                            tint = Color(0xFF2E2E2E),
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = if (isPaused) "Devam" else "Duraklat",
+                            color = Color(0xFF2E2E2E),
+                            fontWeight = FontWeight.Medium
+                        )
                     }
-                }
-                
-                // Next/Finish button
-                Card(
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(56.dp)
-                        .clickable {
+                    
+                    // Next/Finish button
+                    Button(
+                        onClick = {
                             if (currentSet < workout.exercises[currentExercise].sets) {
                                 currentSet++
                                 timeRemaining = workout.exercises[currentExercise].restTime
@@ -746,71 +711,43 @@ private fun ActiveWorkoutScreen(
                                 onFinish()
                             }
                         },
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color(0xFFFF6B35)
-                    ),
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                if (currentExercise == workout.exercises.size - 1 && currentSet == workout.exercises[currentExercise].sets) 
-                                    Icons.Default.Check else Icons.Default.SkipNext,
-                                contentDescription = null,
-                                tint = Color.White,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = if (currentExercise == workout.exercises.size - 1 && currentSet == workout.exercises[currentExercise].sets) 
-                                    "Bitir" else "Sonraki",
-                                color = Color.White,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Emergency stop button
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(48.dp)
-                    .clickable { onFinish() },
-                colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFFFF4757).copy(alpha = 0.8f)
-                ),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF2E2E2E)
+                        ),
+                        shape = RoundedCornerShape(12.dp)
                     ) {
                         Icon(
-                            Icons.Default.Stop,
+                            if (currentExercise == workout.exercises.size - 1 && currentSet == workout.exercises[currentExercise].sets) 
+                                Icons.Default.Check else Icons.Default.SkipNext,
                             contentDescription = null,
                             tint = Color.White,
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Antrenmanı Sonlandır",
+                            text = if (currentExercise == workout.exercises.size - 1 && currentSet == workout.exercises[currentExercise].sets) 
+                                "Bitir" else "Sonraki",
                             color = Color.White,
-                            fontSize = 14.sp,
                             fontWeight = FontWeight.Medium
                         )
                     }
+                }
+                
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                // Stop workout button
+                TextButton(
+                    onClick = onFinish,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = "Antrenmanı Sonlandır",
+                        color = Color(0xFFFF4757),
+                        fontWeight = FontWeight.Medium
+                    )
                 }
             }
         }

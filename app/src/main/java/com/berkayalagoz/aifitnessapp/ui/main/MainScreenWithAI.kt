@@ -12,11 +12,12 @@ import com.berkayalagoz.aifitnessapp.ui.main.components.BottomNavigationBar
 import com.berkayalagoz.aifitnessapp.ui.main.components.LoadingScreen
 import com.berkayalagoz.aifitnessapp.ui.main.components.ErrorScreen
 import com.berkayalagoz.aifitnessapp.ui.main.components.NoProfileScreen
+import com.berkayalagoz.aifitnessapp.ui.diet.DietScreen
 
 // Navigation Tab enum
 enum class NavigationTab(val icon: ImageVector, val label: String) {
     HOME(Icons.Default.Home, "Anasayfa"),
-    ASSESSMENT(Icons.Default.Assessment, "Assessment"),
+    DIET(Icons.Default.Restaurant, "Diyet"),
     WORKOUT(Icons.Default.FitnessCenter, "Antrenman"),
     PROFILE(Icons.Default.Person, "Profil")
 }
@@ -41,11 +42,12 @@ fun MainScreenWithAI(
                             userProfile = state.userProfile,
                             aiRecommendations = state.aiRecommendations,
                             onRefreshClick = { viewModel.refreshRecommendations() },
-                            onSignOutClick = onSignOutClick
+                            onSignOutClick = onSignOutClick,
+                            onCreateDemoData = { viewModel.createDemoData() }
                         )
                     }
-                    NavigationTab.ASSESSMENT -> {
-                        AssessmentScreen(onSignOutClick = onSignOutClick)
+                    NavigationTab.DIET -> {
+                        DietScreen()
                     }
                     NavigationTab.WORKOUT -> {
                         WorkoutScreen(

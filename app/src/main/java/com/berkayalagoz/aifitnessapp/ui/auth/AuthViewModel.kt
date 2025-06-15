@@ -42,52 +42,14 @@ class AuthViewModel : ViewModel() {
                 _authState.value = AuthState.Loading
                 
                 // Add a small delay to ensure Firestore is properly initialized
-                delay(500)
-                
-                var userDoc: com.google.firebase.firestore.DocumentSnapshot? = null
-                var isFromCache = false
+                delay(500L)
                 
                 Log.d("AuthViewModel", "Checking assessment for user: ${user.uid}")
                 
-                // Try multiple strategies
-                try {
-                    // Strategy 1: Try server first
-                    userDoc = firestore.collection("users")
-                        .document(user.uid)
-                        .get(Source.SERVER)
-                        .await()
-                    Log.d("AuthViewModel", "Got document from server. Exists: ${userDoc.exists()}")
-                } catch (serverException: Exception) {
-                    try {
-                        // Strategy 2: Try cache
-                        userDoc = firestore.collection("users")
-                            .document(user.uid)
-                            .get(Source.CACHE)
-                            .await()
-                        isFromCache = true
-                        Log.d("AuthViewModel", "Got document from cache. Exists: ${userDoc.exists()}")
-                    } catch (cacheException: Exception) {
-                        // Strategy 3: Try default source (auto)
-                        try {
-                            userDoc = firestore.collection("users")
-                                .document(user.uid)
-                                .get()
-                                .await()
-                            Log.d("AuthViewModel", "Got document from default source. Exists: ${userDoc.exists()}")
-                        } catch (defaultException: Exception) {
-                            // Strategy 4: Assume new user and continue
-                            Log.d("AuthViewModel", "All strategies failed. Assuming new user.")
-                            _authState.value = AuthState.Success(
-                                user = user,
-                                isAssessmentCompleted = false
-                            )
-                            return@launch
-                        }
-                    }
-                }
-
-                val isCompleted = userDoc?.exists() == true
-                Log.d("AuthViewModel", "Assessment completed: $isCompleted")
+                // Retry mekanizması ile profil kontrolü
+                val isCompleted = checkAssessmentWithRetry(user.uid)
+                
+                Log.d("AuthViewModel", "Final assessment status: $isCompleted")
                 
                 _authState.value = AuthState.Success(
                     user = user,
@@ -103,6 +65,68 @@ class AuthViewModel : ViewModel() {
                 )
             }
         }
+    }
+    
+    private suspend fun checkAssessmentWithRetry(userId: String, maxRetries: Int = 3): Boolean {
+        repeat(maxRetries) { attempt ->
+            try {
+                Log.d("AuthViewModel", "Assessment check attempt: ${attempt + 1}")
+                
+                var userDoc: com.google.firebase.firestore.DocumentSnapshot? = null
+                
+                // Try multiple strategies
+                try {
+                    // Strategy 1: Try server first
+                    userDoc = firestore.collection("users")
+                        .document(userId)
+                        .get(Source.SERVER)
+                        .await()
+                    Log.d("AuthViewModel", "Got document from server. Exists: ${userDoc.exists()}")
+                } catch (serverException: Exception) {
+                    try {
+                        // Strategy 2: Try cache
+                        userDoc = firestore.collection("users")
+                            .document(userId)
+                            .get(Source.CACHE)
+                            .await()
+                        Log.d("AuthViewModel", "Got document from cache. Exists: ${userDoc.exists()}")
+                    } catch (cacheException: Exception) {
+                        // Strategy 3: Try default source (auto)
+                        userDoc = firestore.collection("users")
+                            .document(userId)
+                            .get()
+                            .await()
+                        Log.d("AuthViewModel", "Got document from default source. Exists: ${userDoc.exists()}")
+                    }
+                }
+
+                // Check if user document exists and has required fields
+                val isCompleted = userDoc?.exists() == true && 
+                    userDoc.data?.containsKey("fitnessGoal") == true &&
+                    userDoc.data?.containsKey("gender") == true &&
+                    userDoc.data?.containsKey("weight") == true
+                
+                Log.d("AuthViewModel", "Assessment completed: $isCompleted")
+                Log.d("AuthViewModel", "User doc exists: ${userDoc?.exists()}")
+                Log.d("AuthViewModel", "Has fitness goal: ${userDoc?.data?.containsKey("fitnessGoal")}")
+                
+                // Eğer profil bulunduysa sonucu döndür
+                if (userDoc?.exists() == true) {
+                    return isCompleted
+                }
+                
+            } catch (e: Exception) {
+                Log.e("AuthViewModel", "Error in assessment check attempt ${attempt + 1}", e)
+                if (attempt < maxRetries - 1) {
+                    // Son deneme değilse biraz bekle
+                    delay(1000L * (attempt + 1)) // 1s, 2s, 3s
+                }
+            }
+        }
+        
+        // Tüm denemeler başarısız olursa yeni kullanıcı varsay
+        Log.w("AuthViewModel", "Failed to check assessment after $maxRetries attempts, assuming new user")
+        return false
     }
 
     fun signIn(email: String, password: String) {
@@ -153,5 +177,12 @@ class AuthViewModel : ViewModel() {
     fun signOut() {
         auth.signOut()
         _authState.value = AuthState.Initial
+    }
+
+    fun markAssessmentCompleted() {
+        val currentState = _authState.value
+        if (currentState is AuthState.Success) {
+            _authState.value = currentState.copy(isAssessmentCompleted = true)
+        }
     }
 } 
