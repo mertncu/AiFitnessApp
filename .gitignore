@@ -13,3 +13,23 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Google Services (e.g. APIs or Firebase)
+google-services.json
+app/google-services.json
+
+# API Keys and Secrets
+*.jks
+*.keystore
+*.properties
+!gradle.properties
+!gradle-wrapper.properties
+
+# Exclude specific properties files that might contain sensitive data
+release.properties
+private.properties
+secret.properties
+
+# Firebase
+firebase-debug.log
+firebase-debug.*.log
