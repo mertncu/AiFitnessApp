@@ -72,8 +72,10 @@ GEMINI_API_KEY=your_api_key_here
 4. Projeyi Android Studio ile açın ve sync edin.
 
 ## 📱 Ekran Görüntüleri
+![Screenshot_20250704_115428](https://github.com/user-attachments/assets/82bce763-00ce-49a2-9a65-86b447232a6c)
+![Screenshot_20250704_115413](https://github.com/user-attachments/assets/ba6c776f-a8b6-4af8-a12a-3565b882d0d6)
+![Screenshot_20250704_115356](https://github.com/user-attachments/assets/f4c428e7-56d0-4be2-a2f5-e0b2e6a9a8bf)
 
-[Ekran görüntüleri buraya eklenecek]
 
 ## 🔐 Güvenlik
 
