@@ -1,8 +1,8 @@
-# AI Fitness App 🏋️‍♂️
+# AI Fitness App
 
 AI Fitness App, yapay zeka destekli kişiselleştirilmiş fitness deneyimi sunan modern bir Android uygulamasıdır. Google'ın Gemini AI teknolojisini kullanarak kullanıcılara özel antrenman programları, beslenme önerileri ve motivasyon desteği sağlar.
 
-## 🚀 Özellikler
+##  Özellikler
 
 - **Kişiselleştirilmiş Antrenman Programları**: Gemini AI ile kullanıcının yaş, kilo, boy, fitness hedefi ve deneyim seviyesine göre özelleştirilmiş antrenman programları
 - **Fitness Analizi**: Detaylı vücut analizi ve fitness seviyesi değerlendirmesi
@@ -11,7 +11,7 @@ AI Fitness App, yapay zeka destekli kişiselleştirilmiş fitness deneyimi sunan
 - **Modern UI/UX**: Jetpack Compose ile geliştirilmiş modern ve kullanıcı dostu arayüz
 - **Güvenli Kimlik Doğrulama**: Firebase Authentication ile güvenli kullanıcı yönetimi
 
-## 🛠 Teknoloji Stack
+## 🛠 Tech Stack
 
 ### Backend & AI
 - **Google Gemini AI**: Kişiselleştirilmiş antrenman ve beslenme önerileri için AI modeli
@@ -32,7 +32,7 @@ AI Fitness App, yapay zeka destekli kişiselleştirilmiş fitness deneyimi sunan
 - **Kotlin Serialization**: JSON işleme
 - **AndroidX Lifecycle**: Yaşam döngüsü yönetimi
 
-## 🏗 Proje Yapısı
+## 🏗Proje Yapısı
 
 ```
 app/
@@ -46,7 +46,7 @@ app/
     └── theme/      # UI tema ve stil
 ```
 
-## 🚦 Başlangıç
+##  Başlangıç
 
 ### Gereksinimler
 - Android Studio Hedgehog | 2023.1.1 veya üzeri
@@ -59,7 +59,7 @@ app/
 
 1. Projeyi klonlayın:
 ```bash
-git clone https://github.com/yourusername/AiFitnessApp.git
+git clone https://github.com/mertncu/AiFitnessApp.git
 ```
 
 2. `local.properties` dosyasına Gemini API anahtarınızı ekleyin:
